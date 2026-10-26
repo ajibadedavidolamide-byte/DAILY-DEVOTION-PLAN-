@@ -1,0 +1,633 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Devotion Plan</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,600&display=swap">
+<style>
+/* Layout: one narrow column. Today's readings on top, a fold-out panel to adapt the plan, then the full schedule by month. */
+:root{
+  --bg:#EEF2F1; --surface:#FFFFFF; --ink:#16211F; --muted:#56655F; --line:#D3DCD9;
+  --accent:#0E5E5A; --on-accent:#FFFFFF;
+  --psalm:#4B4BA8; --ot:#9A5A0C; --nt:#1D7446; --warn:#B3402A;
+  --font-ui:"Hanken Grotesk",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-read:"Newsreader",Georgia,"Times New Roman",serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E1514; --surface:#162120; --ink:#E5EEEC; --muted:#93A5A0; --line:#27373A;
+    --accent:#5CC4BC; --on-accent:#08201E;
+    --psalm:#A9A9F2; --ot:#E3A650; --nt:#6FD19A; --warn:#F28C74;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E1514; --surface:#162120; --ink:#E5EEEC; --muted:#93A5A0; --line:#27373A;
+  --accent:#5CC4BC; --on-accent:#08201E;
+  --psalm:#A9A9F2; --ot:#E3A650; --nt:#6FD19A; --warn:#F28C74;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-ui);font-size:15px;line-height:1.5;
+  padding-block:20px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+h1,h2,h3,p{margin:0}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+header{display:flex;flex-direction:column;gap:10px}
+h1{font-family:var(--font-read);font-weight:600;font-size:30px;line-height:1.15;text-wrap:balance}
+.lead{color:var(--muted);font-size:14px}
+.bar{height:8px;border-radius:99px;background:var(--line);overflow:hidden}
+.bar>i{display:block;height:100%;background:var(--accent);border-radius:99px;width:0;transition:width .3s}
+.stats{display:flex;flex-wrap:wrap;gap:6px 18px;color:var(--muted);font-size:13px;font-variant-numeric:tabular-nums}
+.stats b{color:var(--ink);font-weight:600}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:14px}
+.today-head{display:flex;flex-direction:column;gap:2px}
+.today-head h2{font-family:var(--font-read);font-weight:600;font-size:22px;line-height:1.2}
+.reads{display:flex;flex-direction:column;gap:10px}
+.read{display:grid;grid-template-columns:4px 1fr;gap:12px;align-items:stretch}
+.read i{border-radius:4px;background:var(--c)}
+.read div{min-width:0}
+.read .lab{font-size:12px;letter-spacing:.06em;text-transform:uppercase;font-weight:600;color:var(--c)}
+.read .ref{font-family:var(--font-read);font-size:21px;line-height:1.25;overflow-wrap:anywhere}
+.k-psalm{--c:var(--psalm)} .k-ot{--c:var(--ot)} .k-nt{--c:var(--nt)}
+.btn{font:inherit;font-weight:600;border:0;border-radius:10px;padding:12px 16px;min-height:46px;cursor:pointer;background:var(--accent);color:var(--on-accent);width:100%}
+.btn.is-done,.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn:focus-visible,summary:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,.link:focus-visible,.ed:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.hour{font-size:13px;color:var(--muted)}
+.hour b{color:var(--ink);font-weight:600}
+.note{font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:12px}
+.warn{border:1px solid var(--warn);border-radius:12px;padding:12px 14px;font-size:14px;display:flex;flex-direction:column;gap:6px}
+.warn b{color:var(--warn)}
+.warn div{display:flex;flex-wrap:wrap;gap:6px 16px}
+.link{font:inherit;background:none;border:0;padding:0;color:var(--accent);font-weight:600;text-align:left;cursor:pointer;text-decoration:underline}
+.rounds{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--muted)}
+.rounds span::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--c);margin-right:6px}
+.mynote{font-size:13px;color:var(--muted);font-style:italic;overflow-wrap:anywhere}
+details{background:var(--surface);border:1px solid var(--line);border-radius:12px}
+summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;gap:12px;padding:14px 16px;font-weight:600;min-height:48px;align-items:center}
+summary::-webkit-details-marker{display:none}
+summary .cnt{font-weight:400;color:var(--muted);font-size:13px;font-variant-numeric:tabular-nums;text-align:right}
+.panelbody{border-top:1px solid var(--line);padding:16px;display:flex;flex-direction:column;gap:14px}
+.hint{font-size:13px;color:var(--muted)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.field label,.field .fl{font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+input[type=date],input[type=time],select,input[type=text],input[type=email],textarea{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px;min-height:44px;width:100%;min-width:0}
+textarea{min-height:72px;resize:vertical}
+.checks{display:flex;flex-wrap:wrap;gap:8px 18px}
+.checks label{display:flex;gap:8px;align-items:center;min-height:36px;font-size:14px}
+.checks input{width:20px;height:20px;accent-color:var(--accent)}
+.msg{font-size:13px;color:var(--muted);min-height:1.2em}
+.msg.bad{color:var(--warn)}
+.btns{display:flex;flex-wrap:wrap;gap:8px}
+.btns .btn{width:auto;flex:1 1 200px}
+hr{border:0;border-top:1px solid var(--line);margin:0}
+section.months{display:flex;flex-direction:column;gap:8px}
+.rows{display:flex;flex-direction:column;border-top:1px solid var(--line)}
+.rw{border-bottom:1px solid var(--line)}
+.rw:last-child{border-bottom:0}
+.row{display:grid;grid-template-columns:32px 76px 1fr auto;gap:8px;padding:10px 12px 10px 16px;align-items:start}
+.chk{display:flex;width:32px;height:32px;align-items:center;justify-content:center;margin:-4px 0 0 -6px;cursor:pointer}
+.chk input{width:22px;height:22px;margin:0;accent-color:var(--accent)}
+.row .d{font-size:13px;color:var(--muted);line-height:1.3;font-variant-numeric:tabular-nums}
+.row .d b{display:block;color:var(--ink);font-weight:600}
+.row .t{display:flex;flex-direction:column;gap:1px;font-size:14px;min-width:0}
+.row .t span{overflow-wrap:anywhere}
+.row .t span::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--c);margin-right:7px;vertical-align:middle}
+.row .t .edited::after{content:" (edited)";color:var(--muted);font-size:12px}
+.ed{font:inherit;font-size:13px;font-weight:600;color:var(--accent);background:none;border:0;padding:6px 8px;min-height:36px;cursor:pointer}
+.rw.is-done .t{opacity:.5}
+.rw.is-today{background:color-mix(in srgb,var(--accent) 10%,var(--surface))}
+.rw.is-missed .d b{color:var(--warn)}
+.tag{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--accent);margin-top:2px;font-style:normal}
+.editor{padding:4px 16px 16px;display:flex;flex-direction:column;gap:10px}
+.foot{font-size:13px;color:var(--muted)}
+#app{display:flex;flex-direction:column;gap:16px}
+#gate{gap:12px}
+#gate h2{font-family:var(--font-read);font-weight:600;font-size:22px;line-height:1.2}
+.who{font-size:13px;color:var(--muted);display:flex;gap:6px 10px;flex-wrap:wrap;align-items:center}
+.who b{color:var(--ink);font-weight:600}
+@media (prefers-reduced-motion:reduce){.bar>i{transition:none}}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <p class="eyebrow">For members of CMDA, OAUTHC</p>
+    <h1>Devotion Plan</h1>
+  </header>
+
+  <p class="hint" id="boot">Loading...</p>
+
+  <article class="card" id="gate" hidden>
+    <h2>Sign in</h2>
+    <p class="hint">Sign in so your plan, ticks and notes follow you to any phone or computer. Only you can see them.</p>
+    <button class="btn" type="button" id="g-google">Continue with Google</button>
+    <p class="hint" style="text-align:center">or use your email</p>
+    <div class="field"><label for="g-email">Email address</label><input type="email" id="g-email" autocomplete="email" placeholder="you@example.com"></div>
+    <button class="btn ghost" type="button" id="g-link">Email me a sign-in link</button>
+    <p class="msg" id="gmsg" role="status"></p>
+  </article>
+
+  <div id="app" hidden>
+  <p class="who">Signed in as <b id="who-name"></b> <button class="link" type="button" id="b-switch">Sign out</button></p>
+  <p class="lead" id="lead"></p>
+  <div class="bar" role="progressbar" aria-label="Plan progress" aria-valuemin="0" aria-valuemax="1" id="bar"><i id="barfill"></i></div>
+  <div class="stats" id="stats"></div>
+
+  <div id="warn" hidden></div>
+
+  <article class="card" id="today"></article>
+
+  <details id="custom">
+    <summary><span>Customize my plan</span><span class="cnt" id="planline"></span></summary>
+    <div class="panelbody">
+      <p class="hint">Everything here is yours alone. Other members keep their own dates, readings and ticks. You can also change any single day from the schedule below with its Edit button.</p>
+      <div class="grid2">
+        <div class="field"><label for="s-start">My start date</label><input type="date" id="s-start"></div>
+        <div class="field"><label for="s-end">My finish date</label><input type="date" id="s-end"></div>
+      </div>
+      <div class="field"><span class="fl">Readings I want each day</span>
+        <div class="checks">
+          <label><input type="checkbox" id="s-psalm"> Psalm</label>
+          <label><input type="checkbox" id="s-ot"> Old Testament</label>
+          <label><input type="checkbox" id="s-nt"> New Testament</label>
+        </div>
+      </div>
+      <div class="grid2">
+        <div class="field"><label for="r-ps">Times through Psalms</label><select id="r-ps"></select></div>
+        <div class="field"><label for="r-ot">Times through Old Testament</label><select id="r-ot"></select></div>
+        <div class="field"><label for="r-nt">Times through New Testament</label><select id="r-nt"></select></div>
+      </div>
+      <p class="msg" id="smsg" role="status"></p>
+      <div class="btns">
+        <button class="btn ghost" type="button" id="b-resume">Catch up: make my next unfinished day today</button>
+        <button class="btn ghost" type="button" id="b-group">Use the group plan</button>
+      </div>
+      <hr>
+      <div class="field"><span class="fl">Daily reminder</span>
+        <p class="hint">Your phone's calendar app will remind you, even when this page is closed. Pick a time, then add the reminder.</p>
+      </div>
+      <div class="grid2"><div class="field"><label for="s-time">Reminder time</label><input type="time" id="s-time"></div></div>
+      <div class="btns">
+        <button class="btn ghost" type="button" id="b-ics">Download calendar file with each day's readings</button>
+        <button class="btn ghost" type="button" id="b-gcal">Add a repeating reminder to Google Calendar</button>
+      </div>
+      <p class="msg" id="rmsg" role="status"></p>
+      <hr>
+      <div class="field"><label for="backup">Backup code</label>
+        <textarea id="backup" spellcheck="false" placeholder="Tap Make backup code, then keep the text somewhere safe. Paste it here and tap Restore to load it on another phone or browser."></textarea>
+      </div>
+      <div class="btns">
+        <button class="btn ghost" type="button" id="b-backup">Make backup code</button>
+        <button class="btn ghost" type="button" id="b-restore">Restore from code</button>
+      </div>
+      <p class="msg" id="savestatus" role="status"></p>
+    </div>
+  </details>
+
+  <section class="months" id="months" aria-label="Full schedule"></section>
+
+  <p class="foot" id="foot"></p>
+  </div>
+</div>
+
+<script>
+/*PURE-START*/
+const OT_BOOKS=[["Genesis",50],["Exodus",40],["Leviticus",27],["Numbers",36],["Deuteronomy",34],["Joshua",24],["Judges",21],["Ruth",4],["1 Samuel",31],["2 Samuel",24],["1 Kings",22],["2 Kings",25],["1 Chronicles",29],["2 Chronicles",36],["Ezra",10],["Nehemiah",13],["Esther",10],["Job",42],["Proverbs",31],["Ecclesiastes",12],["Song of Solomon",8],["Isaiah",66],["Jeremiah",52],["Lamentations",5],["Ezekiel",48],["Daniel",12],["Hosea",14],["Joel",3],["Amos",9],["Obadiah",1],["Jonah",4],["Micah",7],["Nahum",3],["Habakkuk",3],["Zephaniah",3],["Haggai",2],["Zechariah",14],["Malachi",4]];
+const NT_BOOKS=[["Matthew",28],["Mark",16],["Luke",24],["John",21],["Acts",28],["Romans",16],["1 Corinthians",16],["2 Corinthians",13],["Galatians",6],["Ephesians",6],["Philippians",4],["Colossians",4],["1 Thessalonians",5],["2 Thessalonians",3],["1 Timothy",6],["2 Timothy",4],["Titus",3],["Philemon",1],["Hebrews",13],["James",5],["1 Peter",5],["2 Peter",3],["1 John",5],["2 John",1],["3 John",1],["Jude",1],["Revelation",22]];
+const PS_BOOKS=[["Psalm",150]];
+const PER={psalm:150,ot:779,nt:260};
+function chap(books){const o=[];books.forEach(([b,c])=>{for(let i=1;i<=c;i++)o.push([b,i]);});return o;}
+const CH={psalm:chap(PS_BOOKS),ot:chap(OT_BOOKS),nt:chap(NT_BOOKS)};
+function fmtRefs(items){
+  if(!items.length) return "";
+  const out=[];let i=0;
+  while(i<items.length){
+    const b=items[i][0],s=items[i][1];let j=i;
+    while(j+1<items.length&&items[j+1][0]===b&&items[j+1][1]===items[j][1]+1) j++;
+    const e=items[j][1];
+    const name=b==="Psalm"?(s===e?"Psalm":"Psalms"):b;
+    out.push(s===e?name+" "+s:name+" "+s+"–"+e);
+    i=j+1;
+  }
+  return out.join("; ");
+}
+function parseISO(iso){const p=iso.split("-").map(Number);return new Date(p[0],p[1]-1,p[2]);}
+function toISO(d){const z=n=>String(n).padStart(2,"0");return d.getFullYear()+"-"+z(d.getMonth()+1)+"-"+z(d.getDate());}
+function addDays(iso,n){const d=parseISO(iso);return toISO(new Date(d.getFullYear(),d.getMonth(),d.getDate()+n));}
+function diffDays(a,b){return Math.round((parseISO(b)-parseISO(a))/864e5);}
+function buildDays(st){
+  const D=diffDays(st.start,st.end)+1;
+  const rounds={psalm:st.ps,ot:st.ot,nt:st.nt};
+  const days=[];
+  for(let d=0;d<D;d++){
+    const day={n:d+1,date:addDays(st.start,d),psalm:"",ot:"",nt:"",round:{}};
+    ["psalm","ot","nt"].forEach(k=>{
+      if(!st.tracks[k]) return;
+      const base=CH[k],L=base.length*rounds[k];
+      const a=Math.floor(d*L/D),b=Math.floor((d+1)*L/D);
+      const items=[];
+      for(let x=a;x<b;x++) items.push(base[x%base.length]);
+      day[k]=fmtRefs(items);
+      day.round[k]=Math.floor(a/base.length)+1;
+    });
+    days.push(day);
+  }
+  return days;
+}
+/*PURE-END*/
+
+const GROUP={start:"2026-10-26",end:"2027-12-31",tracks:{psalm:true,ot:true,nt:true},ps:3,ot:1,nt:2,time:"06:00"};
+const KEYBASE="daily-bible-plan-v2";
+const TRACKS=[["psalm","Psalm"],["ot","Old Testament"],["nt","New Testament"]];
+const clone=o=>JSON.parse(JSON.stringify(o));
+const isISO=s=>typeof s==="string"&&/^\d{4}-\d{2}-\d{2}$/.test(s)&&!isNaN(parseISO(s));
+const clampInt=(v,lo,hi,def)=>{v=Number(v);return Number.isInteger(v)&&v>=lo&&v<=hi?v:def;};
+function normalize(r){
+  const st={v:2,updated:0,name:"",settings:clone(GROUP),done:[],edits:{}};
+  if(!r||typeof r!=="object") return st;
+  st.updated=Number(r.updated)||0;
+  st.name=typeof r.name==='string'?r.name.trim().replace(/\s+/g,' ').slice(0,40):'';
+  const s=r.settings||{};
+  if(isISO(s.start)&&isISO(s.end)){const D=diffDays(s.start,s.end)+1;if(D>=7&&D<=2000){st.settings.start=s.start;st.settings.end=s.end;}}
+  ["psalm","ot","nt"].forEach(k=>{if(s.tracks&&typeof s.tracks[k]==="boolean") st.settings.tracks[k]=s.tracks[k];});
+  st.settings.ps=clampInt(s.ps,1,6,GROUP.ps);st.settings.ot=clampInt(s.ot,1,4,GROUP.ot);st.settings.nt=clampInt(s.nt,1,6,GROUP.nt);
+  if(typeof s.time==="string"&&/^([01]\d|2[0-3]):[0-5]\d$/.test(s.time)) st.settings.time=s.time;
+  if(Array.isArray(r.done)) st.done=r.done.filter(Number.isInteger).filter(n=>n>=1&&n<=2000);
+  if(r.edits&&typeof r.edits==="object"){
+    Object.keys(r.edits).forEach(k=>{
+      const n=Number(k),e=r.edits[k];if(!Number.isInteger(n)||n<1||n>2000||!e||typeof e!=="object") return;
+      const o={};
+      ["psalm","ot","nt"].forEach(t=>{if(typeof e[t]==="string"&&e[t].trim()) o[t]=e[t].slice(0,80);});
+      if(typeof e.note==="string"&&e.note.trim()) o.note=e.note.slice(0,500);
+      if(Object.keys(o).length) st.edits[n]=o;
+    });
+  }
+  return st;
+}
+
+let S=normalize(null),doneSet=new Set(),days=[],store=null,saving=false,dirty=false,timer=null,sync2="device",dbStore=null,remote=null,manualGate=false,flash="";
+const openM=new Set();
+
+let UID=null;
+function profileKey(n){return KEYBASE+":u:"+n;}
+function serialize(){return {v:2,updated:S.updated,name:S.name,settings:S.settings,done:[...doneSet].sort((a,b)=>a-b),edits:S.edits};}
+function saveLocal(){if(!UID) return;try{localStorage.setItem(profileKey(UID),JSON.stringify(serialize()));}catch(e){}}
+async function flush(){
+  saveLocal();
+  if(!store) return;
+  if(saving){dirty=true;return;}
+  saving=true;
+  try{do{dirty=false;await store.set(serialize());}while(dirty);sync2="account";}
+  catch(e){sync2="error";}
+  saving=false;setStatus();
+}
+function touch(){S.updated=Date.now();saveLocal();clearTimeout(timer);timer=setTimeout(flush,500);}
+function setStatus(){
+  const el=document.getElementById("savestatus");
+  if(el&&!el.dataset.pinned) el.textContent=store?(sync2==="error"?"Could not reach the server. Your changes are kept on this device and will sync when you are back online.":"Saved to your account and on this device."):"Saved on this device only.";
+}
+function say(id,txt,bad){const el=document.getElementById(id);el.textContent=txt;el.classList.toggle("bad",!!bad);if(id==="savestatus"){el.dataset.pinned="1";setTimeout(()=>{delete el.dataset.pinned;setStatus();},6000);}}
+
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fmtShort=iso=>parseISO(iso).toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"});
+const fmtLong=iso=>parseISO(iso).toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+const fmtMed=iso=>parseISO(iso).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"});
+const TODAY=toISO(new Date());
+
+function eff(d,k){const e=S.edits[d.n];return e&&e[k]?e[k]:d[k];}
+function isEdited(d,k){const e=S.edits[d.n];return !!(e&&e[k]);}
+function todayIdx(){
+  if(TODAY<S.settings.start) return 0;
+  if(TODAY>S.settings.end) return days.length-1;
+  return diffDays(S.settings.start,TODAY);
+}
+const started=()=>TODAY>=S.settings.start;
+const finished=()=>TODAY>S.settings.end;
+function missed(){return days.filter(d=>d.date<TODAY&&!doneSet.has(d.n));}
+function streak(){let i=todayIdx();if(!doneSet.has(days[i].n)) i--;let s=0;while(i>=0&&doneSet.has(days[i].n)){s++;i--;}return s;}
+function isGroup(){const g=GROUP,s=S.settings;return s.start===g.start&&s.end===g.end&&s.ps===g.ps&&s.ot===g.ot&&s.nt===g.nt&&s.tracks.psalm&&s.tracks.ot&&s.tracks.nt;}
+
+function renderTop(){
+  const N=days.length,d=days[todayIdx()];
+  const count=[...doneSet].filter(n=>n<=N).length;
+  document.getElementById("lead").textContent=isGroup()?"The group plan runs from "+fmtMed(S.settings.start)+" to "+fmtMed(S.settings.end)+". Change the dates, readings or any single day under Customize.":"Your own plan runs from "+fmtMed(S.settings.start)+" to "+fmtMed(S.settings.end)+".";
+  document.getElementById("barfill").style.width=(count/N*100)+"%";
+  const bar=document.getElementById("bar");bar.setAttribute("aria-valuemax",N);bar.setAttribute("aria-valuenow",count);
+  document.getElementById("stats").innerHTML='<span><b>'+count+'</b> of '+N+' days done ('+Math.round(count/N*100)+'%)</span><span><b>'+streak()+'</b> day streak</span><span><b>'+(N-count)+'</b> to go</span>';
+  document.getElementById("planline").textContent=N+" days"+(isGroup()?" · group plan":" · mine");
+  const on=TRACKS.filter(([k])=>S.settings.tracks[k]);
+  const isDone=doneSet.has(d.n),sunday=parseISO(d.date).getDay()===0;
+  let head;
+  if(!started()) head='<p class="eyebrow">Starts '+fmtLong(d.date)+'</p><h2>Day 1 of '+N+'</h2>';
+  else if(finished()) head='<p class="eyebrow">Plan complete</p><h2>Final day: '+fmtLong(d.date)+'</h2>';
+  else head='<p class="eyebrow">Today · day '+d.n+' of '+N+'</p><h2>'+fmtLong(d.date)+'</h2>';
+  const reads=on.length?on.map(([k,l])=>'<div class="read k-'+k+'"><i></i><div><div class="lab">'+l+'</div><div class="ref">'+esc(eff(d,k)||"Rest")+'</div></div></div>').join(""):'<p class="hint">Turn on at least one reading under Customize.</p>';
+  const btn=started()?'<button class="btn'+(isDone?' is-done':'')+'" id="todaybtn" type="button">'+(isDone?'Done. Tap to undo':'Mark today done')+'</button>':'';
+  const note=S.edits[d.n]&&S.edits[d.n].note?'<p class="mynote">My note: '+esc(S.edits[d.n].note)+'</p>':'';
+  const rounds=on.map(([k,l])=>'<span class="k-'+k+'">'+l+(S.settings[k==="psalm"?"ps":k]>1?' round '+d.round[k]+' of '+S.settings[k==="psalm"?"ps":k]:', once through')+'</span>').join("");
+  document.getElementById("today").innerHTML='<div class="today-head">'+head+'</div><div class="reads">'+reads+'</div>'+btn+note+
+    '<p class="hour"><b>Suggested hour:</b> pray 5 · Psalm 10 · Old Testament 15 · New Testament 15 · journal 10</p>'+
+    (sunday?'<p class="note"><b>Sunday review.</b> Write three lines on what stood out this week and one thing to act on.</p>':'')+
+    (rounds?'<div class="rounds">'+rounds+'</div>':'');
+  const b=document.getElementById("todaybtn");if(b) b.addEventListener("click",()=>toggleDay(d.n));
+  const w=document.getElementById("warn"),m=started()&&!finished()?missed():[];
+  if(flash){
+    w.hidden=false;w.className="warn";w.innerHTML='<p><b>Plan reset.</b> '+esc(flash)+'</p>';flash="";
+  }else if(m.length){
+    w.hidden=false;w.className="warn";
+    w.innerHTML='<p><b>'+m.length+' missed day'+(m.length>1?'s':'')+'.</b> Read today, then catch up on what you missed. Do not cram.</p><div><button class="link" id="gomissed" type="button">Go to '+fmtShort(m[0].date)+'</button><button class="link" id="restartmiss" type="button">Restart my plan from my first missed day</button></div>';
+    document.getElementById("gomissed").addEventListener("click",()=>jumpTo(m[0].n));
+    document.getElementById("restartmiss").addEventListener("click",()=>resume(true));
+  }else{w.hidden=true;w.innerHTML="";w.className="";}
+  document.getElementById("foot").textContent="Your plan: "+N+" days. Psalms "+(S.settings.tracks.psalm?S.settings.ps+"×":"off")+", Old Testament "+(S.settings.tracks.ot?S.settings.ot+"×":"off")+", New Testament "+(S.settings.tracks.nt?S.settings.nt+"×":"off")+". Your ticks, edits and notes are saved only for you. Use any Bible translation.";
+}
+
+function tHTML(d){
+  const on=TRACKS.filter(([k])=>S.settings.tracks[k]);
+  const sunday=parseISO(d.date).getDay()===0;
+  return on.map(([k])=>'<span class="k-'+k+(isEdited(d,k)?' edited':'')+'">'+esc(eff(d,k)||"Rest")+'</span>').join("")+(sunday?'<em class="tag">Sunday review</em>':'');
+}
+function rowHTML(d){
+  return '<div class="rw" data-n="'+d.n+'"><div class="row"><label class="chk"><input type="checkbox" aria-label="Day '+d.n+' done"></label><div class="d"><b>'+fmtShort(d.date)+'</b>Day '+d.n+'</div><div class="t">'+tHTML(d)+'</div><button class="ed" type="button" aria-expanded="false">Edit</button></div><div class="editor" hidden></div></div>';
+}
+function buildMonths(){
+  const groups=new Map();
+  days.forEach(d=>{const k=d.date.slice(0,7);if(!groups.has(k)) groups.set(k,[]);groups.get(k).push(d);});
+  const cur=days[todayIdx()].date.slice(0,7);
+  if(!openM.size) openM.add(cur);
+  let h="";
+  groups.forEach((list,k)=>{
+    const name=parseISO(list[0].date).toLocaleDateString("en-GB",{month:"long",year:"numeric"});
+    h+='<details data-m="'+k+'"'+(openM.has(k)?' open':'')+'><summary><span>'+name+'</span><span class="cnt" data-cnt="'+k+'"></span></summary><div class="rows">'+list.map(rowHTML).join("")+'</div></details>';
+  });
+  document.getElementById("months").innerHTML=h;
+}
+function syncRows(){
+  document.querySelectorAll(".rw").forEach(row=>{
+    const n=Number(row.dataset.n),d=days[n-1];if(!d) return;
+    const x=doneSet.has(n);
+    row.querySelector("input[type=checkbox]").checked=x;
+    row.classList.toggle("is-done",x);
+    row.classList.toggle("is-today",started()&&!finished()&&d.date===TODAY);
+    row.classList.toggle("is-missed",!x&&d.date<TODAY);
+  });
+  document.querySelectorAll("[data-cnt]").forEach(el=>{
+    const k=el.dataset.cnt,list=days.filter(d=>d.date.startsWith(k));
+    el.textContent=list.filter(d=>doneSet.has(d.n)).length+" / "+list.length;
+  });
+  renderTop();
+}
+function rebuildAll(){days=buildDays(S.settings);buildMonths();syncRows();fillSettings();}
+
+function toggleDay(n){if(doneSet.has(n)) doneSet.delete(n);else doneSet.add(n);touch();syncRows();}
+function jumpTo(n){
+  const row=document.querySelector('.rw[data-n="'+n+'"]');if(!row) return;
+  const det=row.closest("details");if(det) det.open=true;
+  row.scrollIntoView({block:"center"});
+}
+
+function openEditor(row){
+  const n=Number(row.dataset.n),d=days[n-1],ed=row.querySelector(".editor"),btn=row.querySelector(".ed");
+  if(!ed.hidden){ed.hidden=true;btn.setAttribute("aria-expanded","false");btn.textContent="Edit";return;}
+  const e=S.edits[n]||{};
+  const on=TRACKS.filter(([k])=>S.settings.tracks[k]);
+  ed.innerHTML=on.map(([k,l])=>'<div class="field"><label for="e-'+k+'-'+n+'">'+l+'</label><input type="text" id="e-'+k+'-'+n+'" data-k="'+k+'" maxlength="80" value="'+esc(eff(d,k))+'" placeholder="'+esc(d[k])+'"></div>').join("")+
+    '<div class="field"><label for="e-note-'+n+'">My note</label><textarea id="e-note-'+n+'" data-k="note" maxlength="500" placeholder="What stood out today?">'+esc(e.note||"")+'</textarea></div>'+
+    '<div><button class="link" type="button" data-reset="1">Put this day back to the plan</button></div>';
+  ed.hidden=false;btn.setAttribute("aria-expanded","true");btn.textContent="Close";
+}
+function onEdit(e){
+  const t=e.target,row=t.closest(".rw");if(!row||!t.dataset.k) return;
+  const n=Number(row.dataset.n),d=days[n-1],k=t.dataset.k;
+  const cur=S.edits[n]||{};const v=t.value.trim();
+  if(k==="note"){if(v) cur.note=v.slice(0,500);else delete cur.note;}
+  else{if(v&&v!==d[k]) cur[k]=v.slice(0,80);else delete cur[k];}
+  if(Object.keys(cur).length) S.edits[n]=cur;else delete S.edits[n];
+  touch();row.querySelector(".t").innerHTML=tHTML(d);renderTop();
+}
+
+function fillSettings(){
+  const s=S.settings;
+  document.getElementById("s-start").value=s.start;
+  document.getElementById("s-end").value=s.end;
+  document.getElementById("s-time").value=s.time;
+  ["psalm","ot","nt"].forEach(k=>{document.getElementById("s-"+k).checked=s.tracks[k];});
+  document.getElementById("r-ps").value=String(s.ps);
+  document.getElementById("r-ot").value=String(s.ot);
+  document.getElementById("r-nt").value=String(s.nt);
+}
+function readSettings(){
+  const start=document.getElementById("s-start").value,end=document.getElementById("s-end").value;
+  if(!isISO(start)||!isISO(end)){say("smsg","Pick a start date and a finish date.",true);return;}
+  const D=diffDays(start,end)+1;
+  if(D<7){say("smsg","The plan needs at least 7 days between the start and the finish.",true);return;}
+  if(D>2000){say("smsg","The plan can run for at most 2000 days.",true);return;}
+  const tr={psalm:document.getElementById("s-psalm").checked,ot:document.getElementById("s-ot").checked,nt:document.getElementById("s-nt").checked};
+  if(!tr.psalm&&!tr.ot&&!tr.nt){say("smsg","Keep at least one reading turned on.",true);fillSettings();return;}
+  S.settings={start,end,tracks:tr,ps:Number(document.getElementById("r-ps").value),ot:Number(document.getElementById("r-ot").value),nt:Number(document.getElementById("r-nt").value),time:S.settings.time};
+  say("smsg",D+" days. Your schedule has been updated. Ticks stay on the same day numbers.");
+  touch();rebuildAll();
+}
+function resume(fromBanner){
+  const N=days.length;let n=1;while(n<=N&&doneSet.has(n)) n++;
+  if(n>N){say("smsg","You have finished every day. Nothing to catch up.");return;}
+  const start=addDays(TODAY,-(n-1)),end=addDays(start,N-1);
+  S.settings.start=start;S.settings.end=end;
+  const msg="Day "+n+" is now today. Your plan now finishes on "+fmtMed(end)+".";
+  say("smsg",msg);if(fromBanner) flash=msg;
+  touch();rebuildAll();
+}
+function useGroup(){const tm=S.settings.time;S.settings=clone(GROUP);S.settings.time=tm;say("smsg","Back on the group plan. Your ticks, edits and notes are kept.");touch();rebuildAll();}
+
+/*ICS-START*/
+function pageURL(){return location.origin+location.pathname;}
+function icsEsc(s){return String(s).replace(/\\/g,"\\\\").replace(/;/g,"\\;").replace(/,/g,"\\,").replace(/\r?\n/g,"\\n");}
+function icsFold(line){const out=[];let s=line;while(s.length>70){out.push(s.slice(0,70));s=" "+s.slice(70);}out.push(s);return out.join("\r\n");}
+function stamp(iso,hhmm,plusMin){
+  const hm=hhmm.split(":").map(Number),d=parseISO(iso);
+  d.setHours(hm[0],hm[1]+plusMin,0,0);
+  const z=n=>String(n).padStart(2,"0");
+  return d.getFullYear()+z(d.getMonth()+1)+z(d.getDate())+"T"+z(d.getHours())+z(d.getMinutes())+"00";
+}
+/*ICS-END*/
+function remindDays(){return days.filter(d=>d.date>=TODAY);}
+function makeICS(){
+  const list=remindDays();
+  if(!list.length){say("rmsg","There are no days left in your plan to remind you about.",true);return;}
+  const tm=S.settings.time,url=pageURL(),now=new Date(),z=n=>String(n).padStart(2,"0");
+  const dts=now.getUTCFullYear()+z(now.getUTCMonth()+1)+z(now.getUTCDate())+"T"+z(now.getUTCHours())+z(now.getUTCMinutes())+z(now.getUTCSeconds())+"Z";
+  const on=TRACKS.filter(([k])=>S.settings.tracks[k]);
+  const L=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Devotion Plan//EN","CALSCALE:GREGORIAN","METHOD:PUBLISH"];
+  list.forEach(d=>{
+    const desc=on.map(([k,l])=>l+": "+(eff(d,k)||"Rest")).join("\n")+"\nOpen your plan: "+url;
+    L.push("BEGIN:VEVENT","UID:dbp-"+d.date+"@daily-bible-plan","DTSTAMP:"+dts,"DTSTART:"+stamp(d.date,tm,0),"DTEND:"+stamp(d.date,tm,45),
+      "SUMMARY:"+icsEsc("Bible reading, day "+d.n),"DESCRIPTION:"+icsEsc(desc),
+      "BEGIN:VALARM","TRIGGER:PT0M","ACTION:DISPLAY","DESCRIPTION:Time for your Bible reading","END:VALARM","END:VEVENT");
+  });
+  L.push("END:VCALENDAR");
+  const blob=new Blob([L.map(icsFold).join("\r\n")+"\r\n"],{type:"text/calendar;charset=utf-8"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="Devotion-Plan-reminders.ics";
+  document.body.appendChild(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},2000);
+  say("rmsg","Calendar file ready for "+list.length+" days. Open the downloaded file to add the reminders.");
+}
+function openGcal(){
+  const list=remindDays();
+  if(!list.length){say("rmsg","There are no days left in your plan to remind you about.",true);return;}
+  const first=list[0],tm=S.settings.time;
+  const q=new URLSearchParams({action:"TEMPLATE",text:"Bible reading",details:"Open your plan for today's readings: "+pageURL(),dates:stamp(first.date,tm,0)+"/"+stamp(first.date,tm,45),recur:"RRULE:FREQ=DAILY;COUNT="+list.length});
+  window.open("https://calendar.google.com/calendar/render?"+q.toString(),"_blank","noopener");
+  say("rmsg","Google Calendar opened with a repeating reminder. Tap Save there.");
+}
+function makeBackup(){
+  const code="BP2:"+btoa(unescape(encodeURIComponent(JSON.stringify(serialize()))));
+  const ta=document.getElementById("backup");ta.value=code;ta.focus();ta.select();
+  let p=null;try{p=navigator.clipboard&&navigator.clipboard.writeText(code);}catch(e){}
+  if(p&&p.then) p.then(()=>say("savestatus","Backup code copied. Keep it somewhere safe.")).catch(()=>say("savestatus","Copy the selected text and keep it somewhere safe."));
+  else say("savestatus","Copy the selected text and keep it somewhere safe.");
+}
+function restoreBackup(){
+  const raw=document.getElementById("backup").value.trim();
+  if(!raw.startsWith("BP2:")){say("savestatus","That does not look like a backup code.",true);return;}
+  try{
+    const obj=JSON.parse(decodeURIComponent(escape(atob(raw.slice(4)))));
+    const next=normalize(obj);next.updated=Date.now();next.name=S.name;
+    adopt(next);touch();say("savestatus","Backup restored.");
+  }catch(e){say("savestatus","That backup code could not be read.",true);}
+}
+function adopt(next){
+  S=next;doneSet=new Set(S.done);S.done=[];rebuildAll();saveLocal();
+}
+function showApp(){document.getElementById("boot").hidden=true;document.getElementById("gate").hidden=true;document.getElementById("app").hidden=false;document.getElementById("who-name").textContent=S.name||"";}
+function showGate(){document.getElementById("boot").hidden=true;document.getElementById("app").hidden=true;document.getElementById("gate").hidden=false;}
+
+function init(){
+  ["r-ps","r-ot","r-nt"].forEach((id,i)=>{
+    const max=[6,4,6][i],sel=document.getElementById(id);
+    sel.innerHTML=Array.from({length:max},(_,x)=>'<option value="'+(x+1)+'">'+(x+1)+(x?" times":" time")+'</option>').join("");
+  });
+  const host=document.getElementById("months");
+  host.addEventListener("change",e=>{
+    const t=e.target;
+    if(t.matches('.chk input')){const n=Number(t.closest(".rw").dataset.n);if(t.checked) doneSet.add(n);else doneSet.delete(n);touch();syncRows();}
+    else if(t.dataset&&t.dataset.k) onEdit(e);
+  });
+  host.addEventListener("click",e=>{
+    const t=e.target;
+    if(t.classList.contains("ed")) openEditor(t.closest(".rw"));
+    else if(t.dataset&&t.dataset.reset){
+      const row=t.closest(".rw"),n=Number(row.dataset.n),cur=S.edits[n]||{};
+      const note=cur.note;delete S.edits[n];if(note) S.edits[n]={note};
+      touch();row.querySelector(".t").innerHTML=tHTML(days[n-1]);row.querySelector(".editor").hidden=true;
+      const b=row.querySelector(".ed");b.textContent="Edit";b.setAttribute("aria-expanded","false");renderTop();
+    }
+  });
+  host.addEventListener("toggle",e=>{const m=e.target.dataset&&e.target.dataset.m;if(!m) return;if(e.target.open) openM.add(m);else openM.delete(m);},true);
+  ["s-start","s-end","s-psalm","s-ot","s-nt","r-ps","r-ot","r-nt"].forEach(id=>document.getElementById(id).addEventListener("change",readSettings));
+  document.getElementById("b-resume").addEventListener("click",()=>resume(false));
+  document.getElementById("b-group").addEventListener("click",useGroup);
+  document.getElementById("b-backup").addEventListener("click",makeBackup);
+  document.getElementById("b-restore").addEventListener("click",restoreBackup);
+  document.getElementById("s-time").addEventListener("change",e=>{
+    const v=e.target.value;
+    if(/^([01]\d|2[0-3]):[0-5]\d$/.test(v)){S.settings.time=v;touch();say("rmsg","Reminder time set to "+v+". Add the reminder again to update your calendar.");}
+  });
+  document.getElementById("b-ics").addEventListener("click",makeICS);
+  document.getElementById("b-gcal").addEventListener("click",openGcal);
+  document.getElementById("b-switch").addEventListener("click",()=>{if(doSignOut) doSignOut();});
+  S=normalize(null);doneSet=new Set();rebuildAll();setStatus();
+}
+init();
+
+const FIREBASE_CONFIG={
+  apiKey:"AIzaSyA-S8F_10aj3dQthR_g2RUs9AkFC6UqcAo",
+  authDomain:"cmda-oauthc-devotion-plan.firebaseapp.com",
+  projectId:"cmda-oauthc-devotion-plan",
+  storageBucket:"cmda-oauthc-devotion-plan.firebasestorage.app",
+  messagingSenderId:"863343424952",
+  appId:"1:863343424952:web:c5b81c5df8cd418b510b4d"
+};
+let doSignOut=null,pendingLink=false;
+function authMsg(e){
+  const c=(e&&e.code)||"";
+  if(c==="auth/popup-closed-by-user"||c==="auth/cancelled-popup-request") return "Sign-in was cancelled.";
+  if(c==="auth/popup-blocked") return "Your browser blocked the sign-in window. Allow pop-ups for this site and try again.";
+  if(c==="auth/unauthorized-domain") return "This website address is not approved yet. The organiser must add it under Authorized domains in Firebase.";
+  if(c==="auth/operation-not-allowed") return "This sign-in method is not turned on yet in Firebase.";
+  if(c==="auth/invalid-email") return "That email address does not look right.";
+  if(c==="auth/network-request-failed") return "No connection. Check your internet and try again.";
+  if(c==="auth/expired-action-code"||c==="auth/invalid-action-code") return "That sign-in link has expired or was already used. Request a new one.";
+  return "Could not sign in. Please try again.";
+}
+(async()=>{
+  try{
+    const base="https://www.gstatic.com/firebasejs/10.14.1/";
+    const [A,Au,F]=await Promise.all([import(base+"firebase-app.js"),import(base+"firebase-auth.js"),import(base+"firebase-firestore.js")]);
+    const app=A.initializeApp(FIREBASE_CONFIG);
+    const auth=Au.getAuth(app),fs=F.getFirestore(app);
+    let unsub=null;
+    doSignOut=()=>Au.signOut(auth);
+    const emailEl=document.getElementById("g-email"),linkBtn=document.getElementById("g-link");
+    document.getElementById("g-google").addEventListener("click",()=>{
+      say("gmsg","");
+      Au.signInWithPopup(auth,new Au.GoogleAuthProvider()).catch(e=>say("gmsg",authMsg(e),true));
+    });
+    linkBtn.addEventListener("click",async()=>{
+      const email=emailEl.value.trim();
+      if(!email){say("gmsg","Type your email address first.",true);return;}
+      try{
+        if(pendingLink){
+          await Au.signInWithEmailLink(auth,email,location.href);
+          try{localStorage.removeItem("dbp-email");}catch(e){}
+          pendingLink=false;history.replaceState(null,"",location.pathname);
+        }else{
+          await Au.sendSignInLinkToEmail(auth,email,{url:location.origin+location.pathname,handleCodeInApp:true});
+          try{localStorage.setItem("dbp-email",email);}catch(e){}
+          say("gmsg","Link sent to "+email+". Open it on this same phone or computer. Check your spam folder if you do not see it.");
+        }
+      }catch(e){say("gmsg",authMsg(e),true);}
+    });
+    emailEl.addEventListener("keydown",e=>{if(e.key==="Enter") linkBtn.click();});
+    if(Au.isSignInWithEmailLink(auth,location.href)){
+      let em=null;try{em=localStorage.getItem("dbp-email");}catch(e){}
+      if(em){
+        try{await Au.signInWithEmailLink(auth,em,location.href);try{localStorage.removeItem("dbp-email");}catch(e){}history.replaceState(null,"",location.pathname);}
+        catch(e){showGate();say("gmsg",authMsg(e),true);}
+      }else{
+        pendingLink=true;linkBtn.textContent="Finish signing in";showGate();
+        say("gmsg","Type the email address this link was sent to, then tap Finish signing in.");
+      }
+    }
+    Au.onAuthStateChanged(auth,user=>{
+      if(unsub){unsub();unsub=null;}
+      store=null;
+      if(!user){UID=null;S=normalize(null);doneSet=new Set();rebuildAll();showGate();return;}
+      UID=user.uid;
+      let st=null;try{st=JSON.parse(localStorage.getItem(profileKey(UID))||"null");}catch(e){}
+      const next=normalize(st);next.name=user.displayName||user.email||"Member";
+      adopt(next);showApp();
+      const ref=F.doc(fs,"plans",UID);
+      store={set:d=>F.setDoc(ref,d)};
+      unsub=F.onSnapshot(ref,snap=>{
+        if(snap.exists()){
+          const r=normalize(snap.data());
+          if(r.updated>S.updated){r.name=S.name;adopt(r);}
+        }else if(S.updated){clearTimeout(timer);timer=setTimeout(flush,200);}
+        setStatus();
+      },()=>{store=null;setStatus();});
+      setStatus();
+    });
+  }catch(e){
+    const b=document.getElementById("boot");b.hidden=false;b.textContent=(location.protocol==="file:"||location.protocol==="blob:"?"Sign-in does not work when the file is opened from your phone or inside a preview. Open this page from its website address (for example the Vercel address). ":"Could not load sign-in. Check your connection and refresh the page. ")+"Details: "+String((e&&(e.code||e.message))||e).slice(0,160);
+  }
+})();
+</script>
+</body>
+</html>
